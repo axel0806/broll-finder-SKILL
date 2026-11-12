@@ -30,13 +30,21 @@ curl -fsSL https://raw.githubusercontent.com/axel0806/broll-finder-SKILL/main/in
 & ([scriptblock]::Create((irm https://raw.githubusercontent.com/axel0806/broll-finder-SKILL/main/install.ps1)))
 ```
 
-When you run it in a terminal, it lists the agents it found and asks which ones to install into. Pressing Enter installs into every detected agent. Without a terminal, for example in CI, it installs into every detected agent without asking.
+The installer opens a checklist of agents. The ones it detects on your machine are already ticked.
+
+| Key | Action |
+|---|---|
+| <kbd>↑</kbd> <kbd>↓</kbd> or <kbd>j</kbd> <kbd>k</kbd> | Move |
+| <kbd>Space</kbd> | Tick or untick the agent under the cursor |
+| <kbd>a</kbd> | Tick all, or untick all |
+| <kbd>Enter</kbd> | Install into the ticked agents |
+| <kbd>q</kbd> or <kbd>Esc</kbd> | Cancel without changing anything |
 
 <p align="center">
-  <img src="assets/install-demo.svg" alt="Terminal: the install script installs broll-finder into Claude Code, Codex CLI and Cursor" width="80%">
+  <img src="assets/install-demo.svg" alt="Terminal: a checklist of agents with Claude Code, Codex CLI and Cursor ticked, then the installer installs broll-finder into those three" width="80%">
 </p>
 
-To choose agents yourself, add them to the command:
+Without a terminal, for example in CI, there's no checklist: it installs into every detected agent. To skip the checklist and choose agents yourself, name them in the command:
 ```bash
 curl -fsSL https://raw.githubusercontent.com/axel0806/broll-finder-SKILL/main/install.sh | sh -s -- --agent claude,cursor
 ```
@@ -49,9 +57,9 @@ From a clone, run `./install.sh` or `.\install.ps1`.
 > **Windows and WSL:** in PowerShell, `bash` usually starts WSL, which installs into the Linux home where Windows agents can't see it. Use `install.ps1` on Windows. `install.sh` warns when it detects WSL.
 
 ### Supported agents
-An agent counts as detected when its config folder exists.
+An agent counts as detected when its config folder exists. Use the name in the first column with `--agent` (bash) or `-Agent` (PowerShell). Upper or lower case both work.
 
-| Agent id | Agent | Installs to |
+| Name for `--agent` | Agent | Installs to |
 |---|---|---|
 | `claude` | Claude Code | `~/.claude/skills/broll-finder` |
 | `codex` | Codex CLI | `~/.codex/skills/broll-finder` |

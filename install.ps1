@@ -7,7 +7,7 @@
   If run from a clone, it uses the local copy. Otherwise it downloads the file from GitHub.
 
 .EXAMPLE
-  .\install.ps1                         # menu; pressing Enter (or no terminal) = every detected agent
+  .\install.ps1                         # checklist menu (detected agents pre-selected)
   .\install.ps1 -Agent claude           # one agent
   .\install.ps1 -Agent claude,cursor    # several agents
   .\install.ps1 -Agent all              # every agent detected on this machine
@@ -70,9 +70,71 @@ $Agents = @(
 )
 
 function Show-Agents {
+    Write-Host ('  {0,-20} {1,-11} {2}' -f 'Agent', '-Agent', 'Status')
     foreach ($a in $Agents) {
-        Write-Host ('  {0,-9} {1,-20} ' -f $a.Id, $a.Name) -NoNewline
+        Write-Host ('  {0,-20} {1,-11} ' -f $a.Name, $a.Id) -NoNewline
         if (Test-Path -LiteralPath $a.Detect) { Write-Host 'detected' -ForegroundColor Green } else { Write-Host 'not found' }
+    }
+}
+
+# Interactive checklist: Up/Down or j/k move, Space toggles, a toggles all,
+# Enter confirms, q/Esc cancels. Detected agents start selected.
+# Returns the selected ids, or $null if cancelled.
+function Select-AgentsMenu ([string]$Title) {
+    $items = @(foreach ($a in $Agents) {
+        $d = Test-Path -LiteralPath $a.Detect
+        [pscustomobject]@{ Id = $a.Id; Name = $a.Name; Detected = $d; Selected = $d }
+    })
+    $cur = 0
+    Write-Host $Title -ForegroundColor White
+    Write-Host 'up/down or j/k: move   space: select   a: all   enter: continue   q: cancel' -ForegroundColor DarkGray
+    foreach ($i in $items) { Write-Host '' }          # reserve the lines (handles buffer scrolling)
+    $top = [Console]::CursorTop - $items.Count
+    $width = [Math]::Max(20, [Math]::Min(60, [Console]::BufferWidth - 1))
+    $cursorWas = $true
+    try { $cursorWas = [Console]::CursorVisible; [Console]::CursorVisible = $false } catch {}
+
+    $draw = {
+        for ($n = 0; $n -lt $items.Count; $n++) {
+            $it = $items[$n]
+            [Console]::SetCursorPosition(0, $top + $n)
+            if ($n -eq $cur) { $ptr = '  > ' } else { $ptr = '    ' }
+            if ($it.Selected) { $box = '[x]' } else { $box = '[ ]' }
+            if ($it.Detected) { $st = 'detected' } else { $st = 'not found' }
+            Write-Host $ptr -NoNewline -ForegroundColor White
+            if ($it.Selected) { Write-Host $box -NoNewline -ForegroundColor Green } else { Write-Host $box -NoNewline }
+            $label = ' {0,-20} ' -f $it.Name
+            if ($n -eq $cur) { Write-Host $label -NoNewline -ForegroundColor Black -BackgroundColor Gray } else { Write-Host $label -NoNewline }
+            if ($it.Detected) { Write-Host $st -NoNewline -ForegroundColor Green } else { Write-Host $st -NoNewline -ForegroundColor DarkGray }
+            Write-Host (' ' * [Math]::Max(0, $width - 4 - 3 - $label.Length - $st.Length)) -NoNewline
+        }
+    }
+
+    try {
+        while ($true) {
+            & $draw
+            $k = [Console]::ReadKey($true)
+            $c = [string]$k.KeyChar
+            if ($k.Key -eq 'UpArrow' -or $c -eq 'k' -or $c -eq 'K') {
+                if ($cur -gt 0) { $cur-- } else { $cur = $items.Count - 1 }
+            } elseif ($k.Key -eq 'DownArrow' -or $c -eq 'j' -or $c -eq 'J') {
+                if ($cur -lt $items.Count - 1) { $cur++ } else { $cur = 0 }
+            } elseif ($k.Key -eq 'Spacebar') {
+                $items[$cur].Selected = -not $items[$cur].Selected
+            } elseif ($c -eq 'a' -or $c -eq 'A') {
+                $allOn = @($items | Where-Object { -not $_.Selected }).Count -eq 0
+                foreach ($it in $items) { $it.Selected = -not $allOn }
+            } elseif ($k.Key -eq 'Enter') {
+                $sel = @($items | Where-Object { $_.Selected } | ForEach-Object { $_.Id })
+                if ($sel.Count -gt 0) { return ,$sel }
+                [Console]::Beep(800, 120)                 # nothing selected: stay in the menu
+            } elseif ($k.Key -eq 'Escape' -or $c -eq 'q' -or $c -eq 'Q') {
+                return $null
+            }
+        }
+    } finally {
+        try { [Console]::SetCursorPosition(0, $top + $items.Count) } catch {}
+        try { [Console]::CursorVisible = $cursorWas } catch {}
     }
 }
 
@@ -91,14 +153,19 @@ if ($Dest) {
 } else {
     if (-not $Agent) {
         $canPrompt = $false
-        try { $canPrompt = [Environment]::UserInteractive -and -not [Console]::IsInputRedirected } catch { $canPrompt = $false }
+        try {
+            $canPrompt = [Environment]::UserInteractive -and -not [Console]::IsInputRedirected -and -not [Console]::IsOutputRedirected
+        } catch { $canPrompt = $false }
         if ($canPrompt) {
-            Write-Host "Install $SkillName into which agents?" -ForegroundColor White
-            Show-Agents
-            try { $answer = Read-Host "Agent ids, comma-separated [Enter = all detected]" } catch { $answer = '' }
-            if ($answer) { $Agent = @($answer) }
+            if ($Uninstall) { $verb = "Remove $SkillName from" } else { $verb = "Install $SkillName into" }
+            $picked = Select-AgentsMenu "$verb which agents?"
+            if ($null -eq $picked) {
+                Write-Host 'Cancelled, nothing changed.'
+                if ($PSCommandPath) { exit 1 } else { return }
+            }
+            $Agent = $picked
         }
-        # No choice given (Enter, or no terminal): install into every detected agent.
+        # No terminal (CI, redirected input): use every detected agent.
         if (-not $Agent) { $Agent = @('all') }
     }
 
@@ -113,7 +180,7 @@ if ($Dest) {
     foreach ($id in $ids) {
         $a = $Agents | Where-Object { $_.Id -eq $id } | Select-Object -First 1
         if (-not $a) {
-            Stop-Install 2 ("unknown agent '{0}'. Valid agents: {1} all" -f $id, (($Agents | ForEach-Object { $_.Id }) -join ' '))
+            Stop-Install 2 ("unknown agent '{0}'. Use one of: {1} all  (see -List)" -f $id, (($Agents | ForEach-Object { $_.Id }) -join ' '))
         }
         $Targets += @{ Label = $a.Name; Dir = $a.Dir }
     }

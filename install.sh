@@ -2,7 +2,7 @@
 # install.sh: install the broll-finder skill into one or more coding agents.
 #
 # Usage:
-#   ./install.sh                        # menu; Enter (or no terminal) = every detected agent
+#   ./install.sh                        # checklist menu (detected agents pre-selected)
 #   ./install.sh --agent claude         # one agent
 #   ./install.sh --agent claude,cursor  # several agents, comma-separated
 #   ./install.sh --agent all            # every agent detected on this machine
@@ -64,10 +64,106 @@ agent_ids() { agent_table | cut -d'|' -f1 | tr '\n' ' '; }
 agent_field() { agent_table | awk -F'|' -v id="$1" -v f="$2" '$1 == id { print $f }'; }
 
 list_agents() {
+    printf "  %-20s %-11s %s\n" "Agent" "--agent" "Status"
     agent_table | while IFS='|' read -r id name detect _dir; do
         if [ -d "$detect" ]; then s="${G}detected${N}"; else s="not found"; fi
-        printf "  %-9s %-20s %b\n" "$id" "$name" "$s"
+        printf "  %-20s %-11s %b\n" "$name" "$id" "$s"
     done
+}
+
+# ---- interactive checklist --------------------------------------------------
+# Arrow keys or j/k move, space toggles, a toggles all, enter confirms, q/esc cancels.
+# Drawn on /dev/tty so it works under `curl | sh`. Sets MENU_RESULT to "id,id,".
+tty_key() { dd bs=1 count="${1:-1}" 2>/dev/null </dev/tty | od -An -tx1 | tr -d ' \n'; }
+
+menu_select() {
+    m_title=$1
+    m_n=0
+    while IFS='|' read -r id name detect _d; do
+        [ -n "$id" ] || continue
+        m_n=$((m_n + 1))
+        eval "m_id_$m_n=\$id; m_name_$m_n=\$name"
+        if [ -d "$detect" ]; then eval "m_sel_$m_n=1; m_st_$m_n=detected"
+        else eval "m_sel_$m_n=0; m_st_$m_n='not found'"; fi
+    done <<EOF
+$(agent_table)
+EOF
+    m_cur=1
+    m_bold='\033[1m' m_dim='\033[2m' m_grn='\033[0;32m' m_rev='\033[7m' m_off='\033[0m'
+
+    m_draw() {
+        i=1
+        while [ "$i" -le "$m_n" ]; do
+            eval "nm=\$m_name_$i; s=\$m_sel_$i; st=\$m_st_$i"
+            if [ "$s" = 1 ]; then box="${m_grn}[x]${m_off}"; else box="[ ]"; fi
+            if [ "$st" = detected ]; then stc="${m_grn}detected${m_off}"; else stc="${m_dim}not found${m_off}"; fi
+            if [ "$i" -eq "$m_cur" ]; then
+                printf "\033[2K  ${m_bold}>${m_off} %b ${m_rev} %-20s ${m_off} %b\n" "$box" "$nm" "$stc"
+            else
+                printf "\033[2K    %b  %-20s  %b\n" "$box" "$nm" "$stc"
+            fi
+            i=$((i + 1))
+        done
+    }
+
+    m_stty=$(stty -g </dev/tty)
+    m_restore() { stty "$m_stty" </dev/tty 2>/dev/null; printf '\033[?25h' >/dev/tty; }
+    trap 'm_restore; printf "\nCancelled, nothing changed.\n" >/dev/tty; exit 130' 1 2 15
+
+    {
+        printf "${m_bold}%s${m_off}\n" "$m_title"
+        printf "${m_dim}up/down or j/k: move   space: select   a: all   enter: continue   q: cancel${m_off}\n"
+        printf '\033[?25l'
+        m_draw
+    } >/dev/tty
+    stty -icanon -echo min 1 time 0 </dev/tty
+
+    while :; do
+        k=$(tty_key)
+        case "$k" in
+            1b) # escape sequence (arrows) or a lone Esc
+                stty min 0 time 1 </dev/tty; k2=$(tty_key 2); stty min 1 time 0 </dev/tty
+                case "$k2" in
+                    5b41|4f41) k=up ;;
+                    5b42|4f42) k=down ;;
+                    '')        k=quit ;;
+                    *)         k=none ;;
+                esac ;;
+            6b|4b) k=up ;;      # k K
+            6a|4a) k=down ;;    # j J
+            20)    k=toggle ;;  # space
+            61|41) k=all ;;     # a A
+            ''|0a|0d) k=enter ;;
+            71|51|03) k=quit ;; # q Q ctrl-c
+            *)     k=none ;;
+        esac
+        case "$k" in
+            up)     [ "$m_cur" -gt 1 ] && m_cur=$((m_cur - 1)) || m_cur=$m_n ;;
+            down)   [ "$m_cur" -lt "$m_n" ] && m_cur=$((m_cur + 1)) || m_cur=1 ;;
+            toggle) eval "s=\$m_sel_$m_cur"; if [ "$s" = 1 ]; then eval "m_sel_$m_cur=0"; else eval "m_sel_$m_cur=1"; fi ;;
+            all)
+                allon=1; i=1
+                while [ "$i" -le "$m_n" ]; do eval "s=\$m_sel_$i"; [ "$s" = 1 ] || allon=0; i=$((i + 1)); done
+                v=1; [ "$allon" = 1 ] && v=0
+                i=1; while [ "$i" -le "$m_n" ]; do eval "m_sel_$i=$v"; i=$((i + 1)); done ;;
+            enter)
+                MENU_RESULT=""; i=1
+                while [ "$i" -le "$m_n" ]; do
+                    eval "s=\$m_sel_$i; id=\$m_id_$i"
+                    if [ "$s" = 1 ]; then MENU_RESULT="$MENU_RESULT$id,"; fi
+                    i=$((i + 1))
+                done
+                if [ -n "$MENU_RESULT" ]; then break; fi
+                printf '\a' >/dev/tty ;;   # nothing selected: beep and stay
+            quit)
+                m_restore; trap - 1 2 15
+                printf "Cancelled, nothing changed.\n" >/dev/tty
+                exit 1 ;;
+        esac
+        { printf "\033[%dA" "$m_n"; m_draw; } >/dev/tty
+    done
+
+    m_restore; trap - 1 2 15
 }
 
 # ---- parse arguments --------------------------------------------------------
@@ -122,12 +218,11 @@ if [ -n "$DEST" ]; then
 else
     if [ -z "$AGENTS" ]; then
         if can_prompt; then
-            printf "${B}Install %s into which agents?${N}\n" "$SKILL_NAME"
-            list_agents
-            printf "Agent ids, comma-separated [Enter = all detected]: "
-            read -r AGENTS </dev/tty || AGENTS=""
+            if [ "$UNINSTALL" -eq 1 ]; then verb="Remove $SKILL_NAME from"; else verb="Install $SKILL_NAME into"; fi
+            menu_select "$verb which agents?"
+            AGENTS=$MENU_RESULT
         fi
-        # No choice given (Enter, or no terminal): install into every detected agent.
+        # No terminal (CI, piped input): use every detected agent.
         [ -n "$AGENTS" ] || AGENTS="all"
     fi
 
@@ -138,10 +233,10 @@ else
         [ -n "$AGENTS" ] || { err "no supported agents detected; use --agent or --dest"; exit 1; }
     fi
 
-    for id in $(printf "%s" "$AGENTS" | tr ',' ' '); do
+    for id in $(printf "%s" "$AGENTS" | tr ',' ' ' | tr 'A-Z' 'a-z'); do
         dir=$(agent_field "$id" 4)
         if [ -z "$dir" ]; then
-            err "unknown agent '$id'. Valid agents: $(agent_ids)all"
+            err "unknown agent '$id'. Use one of: $(agent_ids)all  (see --list)"
             exit 2
         fi
         add_target "$(agent_field "$id" 2)" "$dir"
