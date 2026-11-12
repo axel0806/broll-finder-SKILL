@@ -84,3 +84,6 @@ Restart your agent. Then ask something like *"find b-roll of <person> and downlo
 
 ## Note
 Only download content you have the right to use, and respect the platform's terms of service and the creators' copyright.
+
+## License
+[Apache License 2.0](LICENSE)
