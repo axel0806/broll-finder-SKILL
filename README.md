@@ -19,8 +19,8 @@ The example commands are written for PowerShell on Windows and are easy to adapt
 Copy the skill folder into your personal skills directory:
 
 ```bash
-git clone https://github.com/axel0806/downloading-broll-clips.git
-cp -r downloading-broll-clips/downloading-broll-clips ~/.claude/skills/
+git clone https://github.com/axel0806/broll-finder-SKILL.git
+cp -r broll-finder-SKILL/downloading-broll-clips ~/.claude/skills/
 ```
 
 Then ask Claude something like *"find b-roll of <person> and download it into this folder"*, or run `/downloading-broll-clips`.
