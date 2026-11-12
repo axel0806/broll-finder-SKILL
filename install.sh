@@ -2,9 +2,9 @@
 # install.sh: install the broll-finder skill into one or more coding agents.
 #
 # Usage:
-#   ./install.sh                        # pick agents from a menu (default: claude)
+#   ./install.sh                        # menu; Enter (or no terminal) = every detected agent
 #   ./install.sh --agent claude         # one agent
-#   ./install.sh --agent claude,codex   # several agents, comma-separated
+#   ./install.sh --agent claude,cursor  # several agents, comma-separated
 #   ./install.sh --agent all            # every agent detected on this machine
 #   ./install.sh --dest DIR             # a custom parent skills directory
 #   ./install.sh --project              # ./.claude/skills in the current directory
@@ -18,9 +18,10 @@
 #   -h, --help    Show this help
 #
 # Remote install (no clone needed):
-#   curl -fsSL https://raw.githubusercontent.com/axel0806/broll-finder-SKILL/main/install.sh | sh -s -- --agent claude
+#   curl -fsSL https://raw.githubusercontent.com/axel0806/broll-finder-SKILL/main/install.sh | sh
 #
 # POSIX sh: works in bash, dash, zsh, ash, macOS and Git Bash on Windows.
+# From Windows PowerShell, use install.ps1 instead.
 
 set -eu
 
@@ -53,6 +54,7 @@ claude|Claude Code|$HOME/.claude|$HOME/.claude/skills
 codex|Codex CLI|$HOME/.codex|$HOME/.codex/skills
 gemini|Gemini CLI|$HOME/.gemini|$HOME/.gemini/skills
 copilot|GitHub Copilot CLI|$HOME/.copilot|$HOME/.copilot/skills
+cursor|Cursor|$HOME/.cursor|$HOME/.cursor/skills
 opencode|OpenCode|$HOME/.config/opencode|$HOME/.config/opencode/skills
 goose|Goose|$HOME/.config/goose|$HOME/.config/goose/skills
 agents|Generic (~/.agents)|$HOME/.agents|$HOME/.agents/skills
@@ -90,6 +92,26 @@ case "$DEST" in
     \~/*) DEST="$HOME/${DEST#\~/}" ;;
 esac
 
+can_prompt() { [ -r /dev/tty ] && { [ -t 0 ] || [ -t 1 ]; } && (: </dev/tty) 2>/dev/null; }
+
+# ---- WSL check --------------------------------------------------------------
+# Inside WSL, $HOME is the Linux home, so agents installed on Windows would not
+# see the skill. This is easy to hit by accident: 'bash' in PowerShell is WSL.
+if [ -z "$DEST" ] && { [ -n "${WSL_DISTRO_NAME:-}" ] || grep -qi microsoft /proc/version 2>/dev/null; }; then
+    win_user=""
+    command -v wslvar >/dev/null 2>&1 && win_user=$(wslvar USERNAME 2>/dev/null </dev/null | tr -d '\r')
+    [ -n "$win_user" ] || win_user="<you>"
+    warn "running inside WSL: this installs into the Linux home ($HOME), not Windows."
+    printf "         Agents running on Windows will NOT see it. For them, run in PowerShell:\n"
+    printf "           & ([scriptblock]::Create((irm https://raw.githubusercontent.com/%s/main/install.ps1)))\n" "$REPO"
+    printf "         or install from here with --dest /mnt/c/Users/%s/.claude/skills\n" "$win_user"
+    if can_prompt && [ "$DRY_RUN" -eq 0 ]; then
+        printf "Continue installing into WSL? [y/N] "
+        read -r reply </dev/tty || reply=""
+        case "$reply" in y|Y|yes|YES) ;; *) echo "Aborted."; exit 1 ;; esac
+    fi
+fi
+
 # ---- choose targets (lines of "label|skills dir") ---------------------------
 TARGETS=""
 add_target() { TARGETS="${TARGETS}$1|$2
@@ -99,18 +121,20 @@ if [ -n "$DEST" ]; then
     add_target "$DEST" "$DEST"
 else
     if [ -z "$AGENTS" ]; then
-        if [ -r /dev/tty ] && { [ -t 0 ] || [ -t 1 ]; } && (: </dev/tty) 2>/dev/null; then
+        if can_prompt; then
             printf "${B}Install %s into which agents?${N}\n" "$SKILL_NAME"
             list_agents
-            printf "Agent ids, comma-separated, or 'all' [claude]: "
+            printf "Agent ids, comma-separated [Enter = all detected]: "
             read -r AGENTS </dev/tty || AGENTS=""
         fi
-        [ -n "$AGENTS" ] || AGENTS="claude"
+        # No choice given (Enter, or no terminal): install into every detected agent.
+        [ -n "$AGENTS" ] || AGENTS="all"
     fi
 
     if [ "$AGENTS" = "all" ]; then
+        # 'if' rather than '[ ] &&': under set -e, a final failed test would abort the script.
         AGENTS=$(agent_table | while IFS='|' read -r id _n detect _d; do
-            [ -d "$detect" ] && printf "%s," "$id"; done)
+            if [ -d "$detect" ]; then printf "%s," "$id"; fi; done)
         [ -n "$AGENTS" ] || { err "no supported agents detected; use --agent or --dest"; exit 1; }
     fi
 

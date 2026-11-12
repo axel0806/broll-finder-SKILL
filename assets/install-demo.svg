@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="330" viewBox="0 0 1000 330" role="img" aria-label="Terminal output of install.sh installing broll-finder into Claude Code, Codex and Cursor">
+  <rect width="1000" height="330" rx="12" fill="#0d0f14" stroke="#2b3246"/>
+  <rect width="1000" height="38" rx="12" fill="#1d2230"/>
+  <rect y="26" width="1000" height="12" fill="#1d2230"/>
+  <circle cx="24" cy="19" r="6.5" fill="#e0565b"/>
+  <circle cx="46" cy="19" r="6.5" fill="#f5b83d"/>
+  <circle cx="68" cy="19" r="6.5" fill="#5cc28a"/>
+  <text x="500" y="24" text-anchor="middle" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="13" fill="#7b849c">bash</text>
+
+  <g font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace" font-size="15">
+    <text x="24" y="72"><tspan fill="#5cc28a">$</tspan><tspan fill="#f4f5f8"> curl -fsSL https://raw.githubusercontent.com/axel0806/broll-finder-SKILL/main/install.sh | sh</tspan></text>
+    <text x="24" y="104" fill="#aab2c8">Source: https://raw.githubusercontent.com/.../broll-finder/SKILL.md</text>
+    <text x="24" y="128" fill="#f4f5f8" font-weight="700">Installing broll-finder</text>
+    <text y="152"><tspan x="40" fill="#5cc28a">ok</tspan><tspan x="99" fill="#dfe3ee">install</tspan><tspan x="173" fill="#dfe3ee">Claude Code (~/.claude/skills/broll-finder)</tspan></text>
+    <text y="176"><tspan x="40" fill="#5cc28a">ok</tspan><tspan x="99" fill="#dfe3ee">install</tspan><tspan x="173" fill="#dfe3ee">Codex CLI (~/.codex/skills/broll-finder)</tspan></text>
+    <text y="200"><tspan x="40" fill="#5cc28a">ok</tspan><tspan x="99" fill="#dfe3ee">install</tspan><tspan x="173" fill="#dfe3ee">Cursor (~/.cursor/skills/broll-finder)</tspan></text>
+    <text x="24" y="224" fill="#dfe3ee">Done: 3 installed, 0 replaced, 0 skipped.</text>
+    <text x="24" y="248" fill="#dfe3ee">Restart your agent, then ask it for b-roll or run /broll-finder.</text>
+    <text x="24" y="288"><tspan fill="#5cc28a">$</tspan><tspan fill="#f4f5f8"> </tspan><tspan fill="#f4f5f8">&#9608;</tspan></text>
+  </g>
+</svg>

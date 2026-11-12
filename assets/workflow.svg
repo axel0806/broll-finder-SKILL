@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="330" viewBox="0 0 1280 330" role="img" aria-label="How broll-finder works: search, pick, download, verify">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#f5b83d"/>
+    </marker>
+  </defs>
+  <rect width="1280" height="330" rx="16" fill="#14161c"/>
+  <text x="40" y="52" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="24" font-weight="700" fill="#f4f5f8">How it works</text>
+
+  <g font-family="Segoe UI, Helvetica, Arial, sans-serif">
+    <!-- 1 Search -->
+    <g transform="translate(40 80)">
+      <rect width="260" height="210" rx="14" fill="#1d2230" stroke="#3a4360"/>
+      <circle cx="36" cy="38" r="18" fill="#f5b83d"/>
+      <text x="36" y="44.5" text-anchor="middle" font-size="18" font-weight="800" fill="#14161c">1</text>
+      <text x="66" y="45" font-size="22" font-weight="700" fill="#f4f5f8">Search</text>
+      <text x="22" y="90" font-size="15" fill="#aab2c8">Several query angles:</text>
+      <text x="22" y="114" font-size="15" fill="#aab2c8">keynote, interview, event,</text>
+      <text x="22" y="138" font-size="15" fill="#aab2c8">highlights, supercut</text>
+      <rect x="22" y="160" width="216" height="30" rx="6" fill="#0d0f14"/>
+      <text x="34" y="180" font-family="Consolas, Menlo, monospace" font-size="13" fill="#7fd1a8">ytsearch8:&lt;subject&gt; ...</text>
+    </g>
+    <path d="M304 185 H 336" stroke="#f5b83d" stroke-width="3" marker-end="url(#arrow)"/>
+
+    <!-- 2 Pick -->
+    <g transform="translate(346 80)">
+      <rect width="260" height="210" rx="14" fill="#1d2230" stroke="#3a4360"/>
+      <circle cx="36" cy="38" r="18" fill="#f5b83d"/>
+      <text x="36" y="44.5" text-anchor="middle" font-size="18" font-weight="800" fill="#14161c">2</text>
+      <text x="66" y="45" font-size="22" font-weight="700" fill="#f4f5f8">Pick</text>
+      <text x="22" y="90" font-size="15" fill="#7fd1a8">+ highlights, stage moments</text>
+      <text x="22" y="114" font-size="15" fill="#7fd1a8">+ real interview footage</text>
+      <text x="22" y="146" font-size="15" fill="#e0868a">- full 2-hour streams</text>
+      <text x="22" y="170" font-size="15" fill="#e0868a">- AI deepfakes, parodies</text>
+      <text x="22" y="194" font-size="15" fill="#e0868a">- reuploads, reactions</text>
+    </g>
+    <path d="M610 185 H 642" stroke="#f5b83d" stroke-width="3" marker-end="url(#arrow)"/>
+
+    <!-- 3 Download -->
+    <g transform="translate(652 80)">
+      <rect width="260" height="210" rx="14" fill="#1d2230" stroke="#3a4360"/>
+      <circle cx="36" cy="38" r="18" fill="#f5b83d"/>
+      <text x="36" y="44.5" text-anchor="middle" font-size="18" font-weight="800" fill="#14161c">3</text>
+      <text x="66" y="45" font-size="22" font-weight="700" fill="#f4f5f8">Download</text>
+      <text x="22" y="90" font-size="15" fill="#aab2c8">One yt-dlp call for the batch</text>
+      <text x="22" y="114" font-size="15" fill="#aab2c8">1080p video + audio, merged</text>
+      <text x="22" y="138" font-size="15" fill="#aab2c8">into MP4 by ffmpeg</text>
+      <rect x="22" y="160" width="216" height="30" rx="6" fill="#0d0f14"/>
+      <text x="34" y="180" font-family="Consolas, Menlo, monospace" font-size="13" fill="#7fd1a8">Title_[id].mp4</text>
+    </g>
+    <path d="M916 185 H 948" stroke="#f5b83d" stroke-width="3" marker-end="url(#arrow)"/>
+
+    <!-- 4 Verify -->
+    <g transform="translate(958 80)">
+      <rect width="282" height="210" rx="14" fill="#1d2230" stroke="#f5b83d"/>
+      <circle cx="36" cy="38" r="18" fill="#f5b83d"/>
+      <text x="36" y="44.5" text-anchor="middle" font-size="18" font-weight="800" fill="#14161c">4</text>
+      <text x="66" y="45" font-size="22" font-weight="700" fill="#f4f5f8">Verify &amp; report</text>
+      <text x="22" y="90" font-size="15" fill="#aab2c8">ffprobe checks every file's</text>
+      <text x="22" y="114" font-size="15" fill="#aab2c8">resolution and length</text>
+      <g font-family="Consolas, Menlo, monospace" font-size="12.5">
+        <rect x="22" y="132" width="238" height="62" rx="6" fill="#0d0f14"/>
+        <text y="152" fill="#dfe3ee"><tspan x="32">1080p</tspan><tspan x="88" fill="#f5b83d">4:41</tspan><tspan x="134">highlights.mp4</tspan></text>
+        <text y="170" fill="#dfe3ee"><tspan x="32">1080p</tspan><tspan x="81" fill="#f5b83d">12:33</tspan><tspan x="134">supercut.mp4</tspan></text>
+        <text x="32" y="188" fill="#e0868a">skipped: 2h livestream</text>
+      </g>
+    </g>
+  </g>
+</svg>

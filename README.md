@@ -1,63 +1,81 @@
+<p align="center">
+  <img src="assets/banner.svg" alt="broll-finder: ask your coding agent for b-roll, get edit-ready 1080p clips" width="100%">
+</p>
+
 # B-Roll Finder (`broll-finder`)
 
-A [Claude Code](https://claude.com/claude-code) skill for finding and downloading b-roll video clips of a person, event, or topic with yt-dlp, ready for video editing.
+An agent skill that finds and downloads b-roll video clips of a person, event, or topic with yt-dlp, ready to drop into your video editor. It works with Claude Code, Codex, Cursor, and other agents that support skills.
 
-It guides Claude through four steps:
-1. Search YouTube with several different queries.
-2. Pick edit-ready clips. It skips full-length streams, AI deepfakes and parodies, and repeat uploads.
-3. Download them all as 1080p MP4.
-4. Check each file with ffprobe and report what was downloaded and what was skipped.
+Ask *"find b-roll of <person> and download it into this folder"*. The agent searches, picks clips that are actually usable, downloads them as 1080p MP4, checks every file, and tells you what it skipped and why.
+
+<p align="center">
+  <img src="assets/workflow.svg" alt="How it works: 1 search with several query angles, 2 pick usable clips and skip full streams, deepfakes and reuploads, 3 download 1080p MP4 with yt-dlp and ffmpeg, 4 verify each file with ffprobe and report" width="100%">
+</p>
 
 ## Requirements
 - [yt-dlp](https://github.com/yt-dlp/yt-dlp)
 - [ffmpeg](https://ffmpeg.org/), including ffprobe
 - Optional: [deno](https://deno.com/), for formats that need a JavaScript runtime
 
-The example commands are written for PowerShell on Windows and are easy to adapt to bash.
-
 ## Install
-Run this one-liner. No clone is needed:
-
+**macOS, Linux, Git Bash:**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/axel0806/broll-finder-SKILL/main/install.sh | sh -s -- --agent claude
+curl -fsSL https://raw.githubusercontent.com/axel0806/broll-finder-SKILL/main/install.sh | sh
 ```
 
-Or install from a clone:
-
-```bash
-git clone https://github.com/axel0806/broll-finder-SKILL.git
-cd broll-finder-SKILL
-./install.sh            # asks which agents to install into
+**Windows PowerShell:**
+```powershell
+& ([scriptblock]::Create((irm https://raw.githubusercontent.com/axel0806/broll-finder-SKILL/main/install.ps1)))
 ```
 
-On Windows, run these commands in Git Bash or WSL.
+When you run it in a terminal, it lists the agents it found and asks which ones to install into. Pressing Enter installs into every detected agent. Without a terminal, for example in CI, it installs into every detected agent without asking.
+
+<p align="center">
+  <img src="assets/install-demo.svg" alt="Terminal: the install script installs broll-finder into Claude Code, Codex CLI and Cursor" width="80%">
+</p>
+
+To choose agents yourself, add them to the command:
+```bash
+curl -fsSL https://raw.githubusercontent.com/axel0806/broll-finder-SKILL/main/install.sh | sh -s -- --agent claude,cursor
+```
+```powershell
+& ([scriptblock]::Create((irm https://raw.githubusercontent.com/axel0806/broll-finder-SKILL/main/install.ps1))) -Agent claude,cursor
+```
+
+From a clone, run `./install.sh` or `.\install.ps1`.
+
+> **Windows and WSL:** in PowerShell, `bash` usually starts WSL, which installs into the Linux home where Windows agents can't see it. Use `install.ps1` on Windows. `install.sh` warns when it detects WSL.
 
 ### Supported agents
-| `--agent` | Agent | Installs to |
+An agent counts as detected when its config folder exists.
+
+| Agent id | Agent | Installs to |
 |---|---|---|
 | `claude` | Claude Code | `~/.claude/skills/broll-finder` |
 | `codex` | Codex CLI | `~/.codex/skills/broll-finder` |
 | `gemini` | Gemini CLI | `~/.gemini/skills/broll-finder` |
 | `copilot` | GitHub Copilot CLI | `~/.copilot/skills/broll-finder` |
+| `cursor` | Cursor | `~/.cursor/skills/broll-finder` |
 | `opencode` | OpenCode | `~/.config/opencode/skills/broll-finder` |
 | `goose` | Goose | `~/.config/goose/skills/broll-finder` |
 | `agents` | Generic cross-agent folder | `~/.agents/skills/broll-finder` |
-| `all` | Every agent detected on this machine | |
+| `all` | Every detected agent | |
 
-You can pass several agents at once, comma-separated: `--agent claude,codex`.
+On Windows, `~` means your user profile folder (`%USERPROFILE%`).
 
 ### Options
-| Flag | What it does |
-|---|---|
-| `--dest DIR` | Install into a custom parent skills directory |
-| `--project` | Install into `./.claude/skills` in the current project |
-| `--force` | Replace an existing install, for example to update |
-| `--uninstall` | Remove the skill from the chosen agents |
-| `--dry-run` | Show what would happen without changing anything |
-| `--ref REF` | Install from a branch, tag or commit |
-| `--list` | Show the supported agents and which ones are detected |
+| `install.sh` | `install.ps1` | What it does |
+|---|---|---|
+| `--agent a,b` | `-Agent a,b` | Install into specific agents |
+| `--dest DIR` | `-Dest DIR` | Install into a custom parent skills directory |
+| `--project` | `-Project` | Install into `./.claude/skills` in the current project |
+| `--force` | `-Force` | Replace an existing install, for example to update |
+| `--uninstall` | `-Uninstall` | Remove the skill |
+| `--dry-run` | `-DryRun` | Show what would happen without changing anything |
+| `--ref REF` | `-Ref REF` | Install from a branch, tag or commit |
+| `--list` | `-List` | Show the supported agents and which ones are detected |
 
-To update to the latest version, run `./install.sh --agent claude --force`. To remove the skill, run `./install.sh --agent claude --uninstall`.
+To update, run the installer again with `--force` (or `-Force`). To remove the skill, use `--uninstall` (or `-Uninstall`).
 
 ## Usage
 Restart your agent. Then ask something like *"find b-roll of <person> and download it into this folder"*, or run `/broll-finder`.
