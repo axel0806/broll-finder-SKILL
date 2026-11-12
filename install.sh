@@ -224,11 +224,35 @@ done <<EOF
 $TARGETS
 EOF
 
-echo "Done: $installed installed, $replaced replaced, $skipped skipped."
+if [ "$DRY_RUN" -eq 1 ]; then
+    echo "Dry run, nothing changed: would install $installed, replace $replaced, skip $skipped."
+else
+    echo "Done: $installed installed, $replaced replaced, $skipped skipped."
+fi
 
 # ---- dependency check -------------------------------------------------------
+# The skill shells out to these at run time, so check the PATH the agent will see.
+printf "${B}Checking dependencies on PATH${N}\n"
+missing=""
 for dep in yt-dlp ffmpeg ffprobe; do
-    command -v "$dep" >/dev/null 2>&1 || warn "'$dep' not found on PATH; the skill needs it to download and check clips"
+    if p=$(command -v "$dep" 2>/dev/null); then
+        ok "found    $dep ($p)"
+    else
+        warn "missing  $dep"
+        missing="$missing $dep"
+    fi
 done
-[ "$installed" -gt 0 ] || [ "$replaced" -gt 0 ] && echo "Restart your agent, then ask it for b-roll or run /$SKILL_NAME."
+if [ -n "$missing" ]; then
+    printf "         The skill needs yt-dlp to download and ffmpeg/ffprobe to merge and check clips.\n"
+    case "$(uname -s 2>/dev/null)" in
+        Darwin)               printf "         Install: brew install yt-dlp ffmpeg\n" ;;
+        MINGW*|MSYS*|CYGWIN*) printf "         Install (PowerShell): winget install yt-dlp.yt-dlp Gyan.FFmpeg\n" ;;
+        *)                    printf "         Install: pipx install yt-dlp  and  sudo apt install ffmpeg (or your package manager)\n" ;;
+    esac
+    printf "         Then open a new terminal so the updated PATH is picked up.\n"
+fi
+
+if [ "$DRY_RUN" -eq 0 ] && { [ "$installed" -gt 0 ] || [ "$replaced" -gt 0 ]; }; then
+    echo "Restart your agent, then ask it for b-roll or run /$SKILL_NAME."
+fi
 exit 0

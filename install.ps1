@@ -191,15 +191,25 @@ try {
         if ($exists) { Write-Ok "replace  $($t.Label) ($target)"; $replaced++ }
         else         { Write-Ok "install  $($t.Label) ($target)"; $installed++ }
     }
-    Write-Host "Done: $installed installed, $replaced replaced, $skipped skipped."
+    if ($DryRun) { Write-Host "Dry run, nothing changed: would install $installed, replace $replaced, skip $skipped." }
+    else         { Write-Host "Done: $installed installed, $replaced replaced, $skipped skipped." }
 } finally {
     Remove-Item -LiteralPath $tmp -Recurse -Force -ErrorAction SilentlyContinue
 }
 
 # ---- dependency check -------------------------------------------------------
+# The skill shells out to these at run time, so check the PATH the agent will see.
+# -CommandType Application ignores aliases/functions with the same name.
+Write-Host 'Checking dependencies on PATH' -ForegroundColor White
+$missing = @()
 foreach ($dep in 'yt-dlp', 'ffmpeg', 'ffprobe') {
-    if (-not (Get-Command $dep -ErrorAction SilentlyContinue)) {
-        Write-Warn "'$dep' not found on PATH; the skill needs it to download and check clips"
-    }
+    $cmd = Get-Command $dep -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($cmd) { Write-Ok "found    $dep ($($cmd.Source))" }
+    else      { Write-Warn "missing  $dep"; $missing += $dep }
 }
-if (($installed + $replaced) -gt 0) { Write-Host "Restart your agent, then ask it for b-roll or run /$SkillName." }
+if ($missing.Count -gt 0) {
+    Write-Host '         The skill needs yt-dlp to download and ffmpeg/ffprobe to merge and check clips.'
+    Write-Host '         Install: winget install yt-dlp.yt-dlp Gyan.FFmpeg'
+    Write-Host '         Then open a new terminal so the updated PATH is picked up.'
+}
+if (-not $DryRun -and ($installed + $replaced) -gt 0) { Write-Host "Restart your agent, then ask it for b-roll or run /$SkillName." }

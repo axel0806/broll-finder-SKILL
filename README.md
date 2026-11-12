@@ -17,6 +17,8 @@ Ask *"find b-roll of <person> and download it into this folder"*. The agent sear
 - [ffmpeg](https://ffmpeg.org/), including ffprobe
 - Optional: [deno](https://deno.com/), for formats that need a JavaScript runtime
 
+Both installers check that `yt-dlp`, `ffmpeg` and `ffprobe` are on your PATH. They show where each one was found, or print the install command for any that are missing.
+
 ## Install
 **macOS, Linux, Git Bash:**
 ```bash
