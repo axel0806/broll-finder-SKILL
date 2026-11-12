@@ -1,4 +1,4 @@
-# broll-finder
+# B-Roll Finder (`broll-finder`)
 
 A [Claude Code](https://claude.com/claude-code) skill for finding and downloading b-roll video clips of a person, event, or topic with yt-dlp, ready for video editing.
 
