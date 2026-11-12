@@ -1,9 +1,9 @@
 ---
-name: downloading-broll-clips
+name: broll-finder
 description: Use when the user asks to find, search for, grab, or download video clips, footage, or b-roll of a person, event, or topic from YouTube or the web with yt-dlp, into a folder for video editing.
 ---
 
-# Downloading B-Roll Clips
+# B-Roll Finder
 
 ## Overview
 Use yt-dlp both to search and to download. B-roll needs footage of the subject itself, in short, edit-ready 1080p MP4 files. Choosing the clips is the step that takes judgment. Downloading is mechanical.

@@ -1,4 +1,4 @@
-# downloading-broll-clips
+# broll-finder
 
 A [Claude Code](https://claude.com/claude-code) skill for finding and downloading b-roll video clips of a person, event, or topic with yt-dlp, ready for video editing.
 
@@ -20,10 +20,10 @@ Copy the skill folder into your personal skills directory:
 
 ```bash
 git clone https://github.com/axel0806/broll-finder-SKILL.git
-cp -r broll-finder-SKILL/downloading-broll-clips ~/.claude/skills/
+cp -r broll-finder-SKILL/broll-finder ~/.claude/skills/
 ```
 
-Then ask Claude something like *"find b-roll of <person> and download it into this folder"*, or run `/downloading-broll-clips`.
+Then ask Claude something like *"find b-roll of <person> and download it into this folder"*, or run `/broll-finder`.
 
 ## Note
 Only download content you have the right to use, and respect the platform's terms of service and the creators' copyright.
